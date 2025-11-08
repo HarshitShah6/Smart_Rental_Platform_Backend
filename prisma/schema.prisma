@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  firebaseId String    @unique
+  email      String    @unique
+  name       String?
+  role       Role      @default(TENANT)
+  createdAt  DateTime  @default(now())
+  properties Property[]
+  sent       Message[] @relation("sent")
+  received   Message[] @relation("received")
+}
+
+model Property {
+  id            String    @id @default(uuid())
+  ownerId       String
+  title         String
+  description   String
+  price         Float
+  predictedRent Float?
+  fraudScore    Float?
+  address       String
+  city          String
+  country       String
+  images        PropertyImage[]
+  features      Json
+  createdAt     DateTime  @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id])
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  propertyId String
+  url        String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  createdAt  DateTime @default(now())
+  sender     User     @relation("sent", fields: [senderId], references: [id])
+  receiver   User     @relation("received", fields: [receiverId], references: [id])
+}
+
+enum Role {
+  TENANT
+  OWNER
+  ADMIN
+}
