@@ -1,4 +1,7 @@
-require('dotenv').config()
+require('dotenv').config();               // MUST be first
+const { initFirebaseAdmin } = require('./firebaseAdmin');
+initFirebaseAdmin(); 
+
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
