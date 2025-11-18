@@ -1,6 +1,6 @@
 // tests/properties.routes.test.js (very top of file)
 
-// ioredis mock (requires ioredis-mock to be installed)
+// ioredis mock (requires ioredis-mock installed)
 jest.mock('ioredis', () => require('ioredis-mock'));
 
 // bullmq lightweight mocks
@@ -13,9 +13,9 @@ jest.mock('bullmq', () => ({
 // predictionQueue: avoid requiring a queue that needs redis
 jest.mock('../src/queues/predictionQueue', () => ({ enqueuePrediction: async () => {} }));
 
-// AUTH - mock several likely import paths so the real middleware never runs.
-// Each of these returns the same API: no-op init + verifyFirebaseToken that reads test headers.
-const authMockFactory = () => ({
+// AUTH - mock several likely import paths using inline factory functions
+// Each mock provides initFirebaseAdmin no-op and verifyFirebaseToken that uses test headers.
+jest.mock('../src/middleware/auth', () => ({
   initFirebaseAdmin: jest.fn(),
   verifyFirebaseToken: (req, res, next) => {
     const sub = req.headers['x-test-sub'] || 'owner-1';
@@ -23,15 +23,52 @@ const authMockFactory = () => ({
     req.firebase = { uid: sub, role };
     next();
   },
-});
-
-// Common relative/absolute paths used in projects
-jest.mock('../src/middleware/auth', authMockFactory);
-jest.mock('../middleware/auth', authMockFactory);
-jest.mock('../src/routes/auth', authMockFactory);
-jest.mock('../routes/auth', authMockFactory);
-jest.mock('src/middleware/auth', authMockFactory); // if you use path aliases
-jest.mock('src/routes/auth', authMockFactory);
+}));
+jest.mock('../middleware/auth', () => ({
+  initFirebaseAdmin: jest.fn(),
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
+jest.mock('../src/routes/auth', () => ({
+  initFirebaseAdmin: jest.fn(),
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
+jest.mock('../routes/auth', () => ({
+  initFirebaseAdmin: jest.fn(),
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
+jest.mock('src/middleware/auth', () => ({
+  initFirebaseAdmin: jest.fn(),
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
+jest.mock('src/routes/auth', () => ({
+  initFirebaseAdmin: jest.fn(),
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
 
 
 // // tests/properties.routes.test.js
