@@ -1,66 +1,102 @@
-// tests/properties.routes.test.js
-// -------------------------------
-// Important: all mocks that affect module import-time behavior must be at the very top,
-// before any `require()` or `import` statements. This file is a fully patched test file.
+// tests/properties.routes.test.js (very top of file)
 
-// Ensure ioredis calls use the in-memory mock (package must be installed)
+// ioredis mock (requires ioredis-mock to be installed)
 jest.mock('ioredis', () => require('ioredis-mock'));
 
-// Prevent BullMQ from opening real connections
+// bullmq lightweight mocks
 jest.mock('bullmq', () => ({
-  Queue: jest.fn().mockImplementation(() => ({
-    add: jest.fn(),
-    close: jest.fn()
-  })),
-  Worker: jest.fn().mockImplementation(() => ({
-    close: jest.fn()
-  })),
-  QueueScheduler: jest.fn().mockImplementation(() => ({
-    close: jest.fn()
-  }))
+  Queue: jest.fn().mockImplementation(() => ({ add: jest.fn(), close: jest.fn() })),
+  Worker: jest.fn().mockImplementation(() => ({ close: jest.fn() })),
+  QueueScheduler: jest.fn().mockImplementation(() => ({ close: jest.fn() }))
 }));
 
-// Mock predictionQueue so properties.js can require it safely (enqueuePrediction will be a no-op)
-jest.mock('../src/queues/predictionQueue', () => ({
-  enqueuePrediction: async () => {}
-}));
+// predictionQueue: avoid requiring a queue that needs redis
+jest.mock('../src/queues/predictionQueue', () => ({ enqueuePrediction: async () => {} }));
 
-// Mock the middleware that properties router imports so initFirebaseAdmin is a no-op
-// and verifyFirebaseToken sets req.firebase from test headers.
-jest.mock('../src/middleware/auth', () => ({
-  initFirebaseAdmin: jest.fn(), // no-op for import time
+// AUTH - mock several likely import paths so the real middleware never runs.
+// Each of these returns the same API: no-op init + verifyFirebaseToken that reads test headers.
+const authMockFactory = () => ({
+  initFirebaseAdmin: jest.fn(),
   verifyFirebaseToken: (req, res, next) => {
     const sub = req.headers['x-test-sub'] || 'owner-1';
     const role = req.headers['x-test-role'] || 'OWNER';
     req.firebase = { uid: sub, role };
     next();
   },
-}));
+});
 
-// Now other mocks
-jest.mock('@prisma/client', () => {
-  const mock = {
-    property: {
-      findUnique: jest.fn(),
-      delete: jest.fn(),
-      update: jest.fn(),
-    },
-    propertyImage: {
-      findMany: jest.fn(),
-      deleteMany: jest.fn(),
-    },
-    user: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    }
-  }
-  return { PrismaClient: jest.fn(() => mock) }
-})
+// Common relative/absolute paths used in projects
+jest.mock('../src/middleware/auth', authMockFactory);
+jest.mock('../middleware/auth', authMockFactory);
+jest.mock('../src/routes/auth', authMockFactory);
+jest.mock('../routes/auth', authMockFactory);
+jest.mock('src/middleware/auth', authMockFactory); // if you use path aliases
+jest.mock('src/routes/auth', authMockFactory);
 
-jest.mock('fs', () => ({
-  existsSync: jest.fn(() => true),
-  unlinkSync: jest.fn(),
-}))
+
+// // tests/properties.routes.test.js
+// // -------------------------------
+// // Important: all mocks that affect module import-time behavior must be at the very top,
+// // before any `require()` or `import` statements. This file is a fully patched test file.
+
+// // Ensure ioredis calls use the in-memory mock (package must be installed)
+// jest.mock('ioredis', () => require('ioredis-mock'));
+
+// // Prevent BullMQ from opening real connections
+// jest.mock('bullmq', () => ({
+//   Queue: jest.fn().mockImplementation(() => ({
+//     add: jest.fn(),
+//     close: jest.fn()
+//   })),
+//   Worker: jest.fn().mockImplementation(() => ({
+//     close: jest.fn()
+//   })),
+//   QueueScheduler: jest.fn().mockImplementation(() => ({
+//     close: jest.fn()
+//   }))
+// }));
+
+// // Mock predictionQueue so properties.js can require it safely (enqueuePrediction will be a no-op)
+// jest.mock('../src/queues/predictionQueue', () => ({
+//   enqueuePrediction: async () => {}
+// }));
+
+// // Mock the middleware that properties router imports so initFirebaseAdmin is a no-op
+// // and verifyFirebaseToken sets req.firebase from test headers.
+// jest.mock('../src/middleware/auth', () => ({
+//   initFirebaseAdmin: jest.fn(), // no-op for import time
+//   verifyFirebaseToken: (req, res, next) => {
+//     const sub = req.headers['x-test-sub'] || 'owner-1';
+//     const role = req.headers['x-test-role'] || 'OWNER';
+//     req.firebase = { uid: sub, role };
+//     next();
+//   },
+// }));
+
+// // Now other mocks
+// jest.mock('@prisma/client', () => {
+//   const mock = {
+//     property: {
+//       findUnique: jest.fn(),
+//       delete: jest.fn(),
+//       update: jest.fn(),
+//     },
+//     propertyImage: {
+//       findMany: jest.fn(),
+//       deleteMany: jest.fn(),
+//     },
+//     user: {
+//       findUnique: jest.fn(),
+//       update: jest.fn(),
+//     }
+//   }
+//   return { PrismaClient: jest.fn(() => mock) }
+// })
+
+// jest.mock('fs', () => ({
+//   existsSync: jest.fn(() => true),
+//   unlinkSync: jest.fn(),
+// }))
 
 // Now safe to require test libraries and modules
 const request = require('supertest')
