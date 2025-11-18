@@ -1,3 +1,19 @@
+jest.mock('ioredis', () => require('ioredis-mock'));
+
+jest.mock('bullmq', () => ({
+  Queue: jest.fn().mockImplementation(() => ({
+    add: jest.fn(),
+    close: jest.fn()
+  })),
+  Worker: jest.fn().mockImplementation(() => ({
+    close: jest.fn()
+  })),
+  QueueScheduler: jest.fn().mockImplementation(() => ({
+    close: jest.fn()
+  }))
+}));
+
+
 const request = require('supertest')
 const express = require('express')
 
