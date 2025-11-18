@@ -30,13 +30,11 @@ jest.mock('fs', () => ({
 const authPath = require.resolve('../src/routes/auth')
 jest.mock(authPath, () => ({
   verifyFirebaseToken: (req, res, next) => {
-    // allow tests to specify acting user via headers: x-test-sub and x-test-role
     const sub = req.headers['x-test-sub'] || 'owner-1'
     const role = req.headers['x-test-role'] || 'OWNER'
-    req.firebase = { _internal: true, sub: String(sub), uid: String(sub), role: String(role), email: `${String(sub)}@example.com` }
-    return next()
-  },
-  signInternalJWT: () => 'token'
+    req.firebase = { uid: sub, role }
+    next()
+  }
 }))
 
 // Now require the router after mocks
