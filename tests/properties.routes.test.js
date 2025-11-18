@@ -1,4 +1,7 @@
-// tests/properties.routes.test.js (top of file)
+// tests/properties.routes.test.js
+// -------------------------------
+// Important: all mocks that affect module import-time behavior must be at the very top,
+// before any `require()` or `import` statements. This file is a fully patched test file.
 
 // Ensure ioredis calls use the in-memory mock (package must be installed)
 jest.mock('ioredis', () => require('ioredis-mock'));
@@ -17,10 +20,15 @@ jest.mock('bullmq', () => ({
   }))
 }));
 
+// Mock predictionQueue so properties.js can require it safely (enqueuePrediction will be a no-op)
+jest.mock('../src/queues/predictionQueue', () => ({
+  enqueuePrediction: async () => {}
+}));
+
 // Mock the middleware that properties router imports so initFirebaseAdmin is a no-op
 // and verifyFirebaseToken sets req.firebase from test headers.
 jest.mock('../src/middleware/auth', () => ({
-  initFirebaseAdmin: jest.fn(), // do nothing during tests
+  initFirebaseAdmin: jest.fn(), // no-op for import time
   verifyFirebaseToken: (req, res, next) => {
     const sub = req.headers['x-test-sub'] || 'owner-1';
     const role = req.headers['x-test-role'] || 'OWNER';
@@ -29,13 +37,7 @@ jest.mock('../src/middleware/auth', () => ({
   },
 }));
 
-// keep your other mocks (prisma/fs) next...
-
-
-const request = require('supertest')
-const express = require('express')
-
-// Mocks will be applied before requiring the router module
+// Now other mocks
 jest.mock('@prisma/client', () => {
   const mock = {
     property: {
@@ -60,18 +62,11 @@ jest.mock('fs', () => ({
   unlinkSync: jest.fn(),
 }))
 
-// Mock the auth module used by properties router to set req.firebase
-jest.mock('../src/routes/auth', () => ({
-  verifyFirebaseToken: (req, res, next) => {
-    const sub = req.headers['x-test-sub'] || 'owner-1'
-    const role = req.headers['x-test-role'] || 'OWNER'
-    req.firebase = { uid: sub, role }
-    next()
-  }
-}))
+// Now safe to require test libraries and modules
+const request = require('supertest')
+const express = require('express')
 
-
-// Now require the router after mocks
+// Require the router after all mocks are in place
 const propertiesRouter = require('../src/routes/properties')
 
 function createApp() {
