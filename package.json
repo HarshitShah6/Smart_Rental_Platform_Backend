@@ -9,6 +9,7 @@
     "dev": "nodemon src/index.js",
     "worker": "node src/workers/predictWorker.js",
     "prisma:generate": "prisma generate",
+    "postinstall": "cross-env PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npx prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:seed": "node prisma/seed.js"
   },
@@ -42,6 +43,7 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.10",
     "prisma": "^5.22.0",
+    "cross-env": "^7.0.3",
     "supertest": "^6.3.4"
   }
 }
