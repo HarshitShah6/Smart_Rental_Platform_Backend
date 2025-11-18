@@ -160,6 +160,16 @@ describe('Properties routes - ownership and deletion', () => {
     prisma = new PrismaClient()
     app = createApp()
   })
+  prisma.user.findUnique.mockImplementation(({ where }) => {
+    if (!where) return Promise.resolve(null)
+    const id = where.id
+    if (id === 'owner-1') return Promise.resolve({ id: 'owner-1', role: 'OWNER' })
+    if (id === 'admin-1') return Promise.resolve({ id: 'admin-1', role: 'ADMIN' })
+    return Promise.resolve(null)
+  })
+  // << END ADD >>
+
+  app = createApp()
 
   test('DELETE /api/properties/:id - success when owner', async () => {
     // setup mocks
