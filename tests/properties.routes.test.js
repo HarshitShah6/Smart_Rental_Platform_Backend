@@ -1,5 +1,9 @@
+// tests/properties.routes.test.js (top of file)
+
+// Ensure ioredis calls use the in-memory mock (package must be installed)
 jest.mock('ioredis', () => require('ioredis-mock'));
 
+// Prevent BullMQ from opening real connections
 jest.mock('bullmq', () => ({
   Queue: jest.fn().mockImplementation(() => ({
     add: jest.fn(),
@@ -12,6 +16,20 @@ jest.mock('bullmq', () => ({
     close: jest.fn()
   }))
 }));
+
+// Mock the middleware that properties router imports so initFirebaseAdmin is a no-op
+// and verifyFirebaseToken sets req.firebase from test headers.
+jest.mock('../src/middleware/auth', () => ({
+  initFirebaseAdmin: jest.fn(), // do nothing during tests
+  verifyFirebaseToken: (req, res, next) => {
+    const sub = req.headers['x-test-sub'] || 'owner-1';
+    const role = req.headers['x-test-role'] || 'OWNER';
+    req.firebase = { uid: sub, role };
+    next();
+  },
+}));
+
+// keep your other mocks (prisma/fs) next...
 
 
 const request = require('supertest')
