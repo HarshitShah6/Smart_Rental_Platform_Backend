@@ -27,8 +27,7 @@ jest.mock('fs', () => ({
 }))
 
 // Mock the auth module used by properties router to set req.firebase
-const authPath = require.resolve('../src/routes/auth')
-jest.mock(authPath, () => ({
+jest.mock('../src/routes/auth', () => ({
   verifyFirebaseToken: (req, res, next) => {
     const sub = req.headers['x-test-sub'] || 'owner-1'
     const role = req.headers['x-test-role'] || 'OWNER'
@@ -36,6 +35,7 @@ jest.mock(authPath, () => ({
     next()
   }
 }))
+
 
 // Now require the router after mocks
 const propertiesRouter = require('../src/routes/properties')
