@@ -14,6 +14,7 @@ model User {
   name       String?
   role       Role      @default(TENANT)
   createdAt  DateTime  @default(now())
+  listingCount Int     @default(0)
   properties Property[]
   sent       Message[] @relation("sent")
   received   Message[] @relation("received")
@@ -28,11 +29,36 @@ model Property {
   predictedRent Float?
   fraudScore    Float?
   address       String
-  city          String
-  country       String
+  city          String?
+  locality      String?
+  country       String?
   images        PropertyImage[]
-  features      Json
+  features      Json?
   createdAt     DateTime  @default(now())
+
+  // ML-specific columns (optional)
+  listingId             String?  @map("listing_id")
+  propertyType          String?
+  bhk                   Int?
+  bathrooms             Float?
+  balconies             Int?
+  furnishing            String?
+  superBuiltUpAreaSqft  Float?   @map("super_builtup_area_sqft")
+  builtUpAreaSqft       Float?   @map("builtup_area_sqft")
+  carpetAreaSqft        Float?   @map("carpet_area_sqft")
+  floor                 Int?
+  totalFloors           Int?
+  parking               String?
+  buildingType          String?
+  yearBuilt             Int?
+  ageYears              Int?
+  facing                String?
+  amenitiesCount        Int?
+  isReraRegistered      Boolean? @map("is_rera_registered")
+  reraId                String?  @map("rera_id")
+  latitude              Float?
+  longitude             Float?
+  isRented              Boolean? @default(false)
 
   owner User @relation(fields: [ownerId], references: [id])
 }

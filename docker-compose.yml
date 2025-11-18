@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  ml:
+    build: ./ml_service
+    environment:
+      - MODEL_PATH=/app/model_latest_sklearn.joblib
+      - META_PATH=/app/model_latest_sklearn_meta.json
+    volumes:
+      - ./ml_service/model_latest_sklearn.joblib:/app/model_latest_sklearn.joblib:ro
+      - ./ml_service/model_latest_sklearn_meta.json:/app/model_latest_sklearn_meta.json:ro
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: ./services/backend
+    env_file:
+      - ./services/backend/.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+      - ml
+
+  worker:
+    build: ./services/backend
+    command: node src/workers/predictWorker.js
+    env_file:
+      - ./services/backend/.env
+    depends_on:
+      - redis
+      - ml

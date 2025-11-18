@@ -261,17 +261,15 @@ The backend calls `POST {ML_BASE}/predict` with a `property` object.
 ```json
 {
   "fraudScore": 0.02,
-  "predictedRent": 1480.00
+  "predictedRent": 1480.00,
+  "predicted_price": 1480.00,
+  "predicted_price_scaled": 2220.00
 }
 ```
 
-If the ML service is unavailable, fallback returns:
-```json
-{
-  "fraudScore": 0,
-  "predictedRent": <original_price>
-}
-```
+Notes:
+- The ML service now returns both `predicted_price` (original model output) and `predicted_price_scaled` (a scaled value, currently 1.5x the original). Backend code should prefer `predicted_price` for storage but may display `predicted_price_scaled` in UI if desired.
+- If the ML service is unavailable, fallback returns a minimal object where `predictedRent` or `predicted_price` may equal the original listed price.
 
 ---
 
